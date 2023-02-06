@@ -53,6 +53,8 @@ namespace WindowsFormsApp4
         public string filepath;
         //-
 
+        double lastx;
+
         public Form1()
         {
             InitializeComponent();
@@ -64,7 +66,7 @@ namespace WindowsFormsApp4
             gridEnabled = false;
             chartDate = DateTime.Now.ToString("d");
             filepath = "";
-            chartTitle = "";
+            chartTitle = "TESTTITEL";
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -102,8 +104,11 @@ namespace WindowsFormsApp4
 
             //-
             //if Text changed from OpenFileDialog -> read data from file, draw chart
-            ReadData();
-            DrawChart();
+            if(textBox1.Text != "")
+            {
+                ReadData();
+                DrawChart();
+            }
             //-
         }
 
@@ -159,7 +164,7 @@ namespace WindowsFormsApp4
             seriesCopy.ChartType = series.ChartType;
             foreach (cc.DataPoint point in series.Points)
             {
-                seriesCopy.Points.AddXY(point.XValue, point.YValues);
+                seriesCopy.Points.AddXY(point.XValue, point.YValues[0]);
             }
             seriesCopy.IsVisibleInLegend = false;
             seriesCopy.Color = Color.Transparent;
@@ -235,7 +240,11 @@ namespace WindowsFormsApp4
             c1.Name = "Default";
             chart1.ChartAreas.Add(c1);
 
-            chart1.ChartAreas.FindByName("Default").Position = new cc.ElementPosition(20, 10, 80, 90);
+            int leftoffset;
+            int downoffset = 10;
+            leftoffset = yval.Count() * 3 + 2;
+
+            chart1.ChartAreas.FindByName("Default").Position = new cc.ElementPosition(leftoffset, downoffset, 100-leftoffset, 100-downoffset);
             chart1.ChartAreas.FindByName("Default").InnerPlotPosition = new cc.ElementPosition(0, 0, 90, 90);
             chart1.ChartAreas.FindByName("Default").AxisX.MajorGrid.Enabled = gridEnabled;
             chart1.ChartAreas.FindByName("Default").AxisX.MinorGrid.Enabled = gridEnabled;
@@ -245,16 +254,18 @@ namespace WindowsFormsApp4
             chart1.ChartAreas.FindByName("Default").AxisY.Interval = (x2 - x1) / 10;
             chart1.ChartAreas.FindByName("Default").AxisX.Minimum = x1;
             chart1.ChartAreas.FindByName("Default").AxisX.Maximum = x2;
+            chart1.ChartAreas.FindByName("Default").AxisY.Minimum = x1;
+            chart1.ChartAreas.FindByName("Default").AxisY.Maximum = x2;
             chart1.ChartAreas.FindByName("Default").AxisX.IsStartedFromZero = true;
             chart1.ChartAreas.FindByName("Default").AxisX.Title = xvalname;
 
-            chart1.Titles.Add(chartTitle);
-            chart1.Titles.Add(chartDate);
+            chart1.Titles.Add(new cc.Title(chartTitle));
+            chart1.Titles.Add(new cc.Title(chartDate));
 
-            chart1.Titles.FindByName(chartDate).Position = new cc.ElementPosition(95, 0, 5, 5);
-            chart1.Titles.FindByName(chartTitle).Font = new Font("Arial", 20, FontStyle.Bold);
+            chart1.Titles.ElementAt(1).Position = new cc.ElementPosition(90, 0, 5, 5);
+            chart1.Titles.ElementAt(0).Font = new Font("Arial", 20, FontStyle.Bold);
 
-            chart1.Legends.Add("Legend1");
+            chart1.Legends.Add(new cc.Legend("Legend1"));
             chart1.Legends.FindByName("Legend1").Position = new cc.ElementPosition(5, 0, 9, 9);
 
             cc.Series xserie = new cc.Series();
@@ -271,7 +282,7 @@ namespace WindowsFormsApp4
             foreach(YSeries yseries in yval)
             {
                 CreateYAxis(chart1, chart1.ChartAreas.FindByName("Default"), yseries, offset, 4);
-                offset += 4;
+                offset += 3;
             }
 
             if(xval.Count > 0)
@@ -291,7 +302,7 @@ namespace WindowsFormsApp4
             //value of last x added
             //if value of new x <= lastx dont add to Series, so it always creates a steady function, not a relation
             //=> x is steadily increasing in displayed function (not decreasing or staying constant)
-            double lastx = double.MinValue;
+            lastx = double.MinValue;
             //-
 
             if(System.IO.File.Exists(filepath))
@@ -313,85 +324,14 @@ namespace WindowsFormsApp4
 
                 foreach (string line in System.IO.File.ReadLines(filepath))
                 {
-                    //-
-                    //foreach line in file, split line at ' '
-                    string[] strlist = line.Split(' ');
-                    //-
-
-                    if (count == 0)
+                    if(count == 0)
                     {
-                        //count = 0 => first line
-
-                        //-
-                        //count2 counting items in strlist
-                        int count2 = 0;
-                        //-
-
-                        foreach(string str in strlist)
-                        {
-                            if(count2 == 0)
-                            {
-                                //first item of strlist => name of xAxis
-                                xvalname = str;
-                            }
-                            else
-                            {
-                                //n. item of strlist => new YSeries with name of Series and Color
-                                //currently 8 YSeries supported for different Colors
-                                switch(count2)
-                                {
-                                    case 1: yval.Add(new YSeries(str, Color.Red)); break;
-                                    case 2: yval.Add(new YSeries(str, Color.Blue)); break;
-                                    case 3: yval.Add(new YSeries(str, Color.Green)); break;
-                                    case 4: yval.Add(new YSeries(str, Color.Orange)); break;
-                                    case 5: yval.Add(new YSeries(str, Color.Brown)); break;
-                                    case 6: yval.Add(new YSeries(str, Color.Yellow)); break;
-                                    case 7: yval.Add(new YSeries(str, Color.Turquoise)); break;
-                                    case 8: yval.Add(new YSeries(str, Color.Black)); break;
-                                    default: yval.Add(new YSeries(str, Color.Gray)); break;
-                                }
-                            }
-                            count2++;
-                        }
+                        //1. line of file
+                        ReadFirstLine(line);
                     }
                     else
                     {
-                        //-
-                        //count2 counting items in strlist
-                        int count2 = 0;
-                        //-
-
-                        //-
-                        //x value of current line
-                        double x = Convert.ToDouble(strlist[0]);
-                        //-
-
-                        foreach(string str in strlist)
-                        {
-                            if(count2 == 0 && x > lastx)
-                            {
-                                //-
-                                //first value of currentline => value of x
-                                //add only if current x > lastx
-                                xval.Add(Convert.ToDouble(str));
-                                //-
-                            }
-                            else if(x > lastx)
-                            {
-                                //-
-                                //n. value of currentline => y value of n-1. Series
-                                yval[count2 - 1].values.Add(Convert.ToDouble(str));
-                                //-
-                            }
-                            count2++;
-                        }
-                        if(x > lastx)
-                        {
-                            //-
-                            //set lastx if x > lastx
-                            lastx = x;
-                            //-
-                        }
+                        ReadLine(line);
                     }
                     count++;
                 }
@@ -400,7 +340,7 @@ namespace WindowsFormsApp4
                 //for now for testing x values in interval [0, 10]
                 //-----
                 //TODO 
-                //set dynamically 
+                //set through TextBoxes 
                 x1 = 0;
                 x2 = 10;
                 //-
@@ -408,5 +348,64 @@ namespace WindowsFormsApp4
 
         }
 
+        private void ReadFirstLine(string input)
+        {
+            //read first line from file
+            //1. line: XAxisName 1.YAxisName ... n.YAxisName
+
+            char[] separators = {' '};
+
+            string[] axisnames = input.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+
+            Color[] colors = {Color.Red, Color.Blue, Color.Green, Color.Yellow, Color.Brown, Color.Orange, Color.Black};
+
+            int count = 0;
+            foreach(string name in axisnames)
+            {
+                if(count == 0)
+                {
+                    //first entry => XAxisName
+                    xvalname = name;
+                }
+                else
+                {
+                    int seriesCount = count - 1;
+                    if(seriesCount < colors.Length)
+                    {
+                        yval.Add(new YSeries(name, colors[seriesCount]));
+                    }
+                    else
+                    {
+                        yval.Add(new YSeries(name, Color.Gray));
+                    }
+                }
+                count++;
+            }
+        }
+
+        private void ReadLine(string input)
+        {
+            //read line from file
+            //lineformat: xvalue yvalueOf1.Series ... yvalueOfN.Series
+
+            char[] separators = {' '};
+
+            string[] values = input.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+
+            int count = 0;
+            foreach(string val in values)
+            {
+                if(count == 0)
+                {
+                    xval.Add(Convert.ToDouble(val));
+                }
+                else
+                {
+                    int seriesCount = count - 1;
+                    yval[seriesCount].Add(Convert.ToDouble(val));
+                }
+                count++;
+            }
+        }
     }
 }

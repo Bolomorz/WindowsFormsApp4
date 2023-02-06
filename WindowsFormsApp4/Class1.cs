@@ -10,7 +10,8 @@ namespace WindowsFormsApp4
     public class YSeries
     {
         public List<double> values = new List<double>();
-        public double min, max, interval;
+        public int min, max; 
+        public double interval;
         public string name;
         public System.Drawing.Color color;
 
@@ -49,7 +50,14 @@ namespace WindowsFormsApp4
                     //output += "input: " + input + " val: " + val + Environment.NewLine;
                     val = val * 10;
                 }
-                val = val / 10;
+                if(val == 1)
+                {
+                    val = 1;
+                }
+                else
+                {
+                    val = val / 10;
+                }
                 //output += val + Environment.NewLine;
                 //-
 
@@ -87,7 +95,14 @@ namespace WindowsFormsApp4
                         //output += "input: " + input + " val: " + val + Environment.NewLine;
                         val = val * 10;
                     }
-                    val = val / 10;
+                    if(val == -1)
+                    {
+                        val = -1;
+                    }
+                    else
+                    {
+                        val = val / 10;
+                    }
                     //output += "val: " + val + Environment.NewLine;
                     min = 0;
                     while(input < min)
@@ -96,10 +111,6 @@ namespace WindowsFormsApp4
                         min = min + val;
                     }
                     //output += "min: " + min + Environment.NewLine;
-                    if((-1) * min < max / 10)
-                    {
-                        min = (-1) * (max / 10);
-                    }
                 }
                 else
                 {
@@ -110,7 +121,14 @@ namespace WindowsFormsApp4
                         //output += "input: " + input + " val: " + val + Environment.NewLine;
                         val = val * 10;
                     }
-                    val = val / 10;
+                    if(val == 1)
+                    {
+                        val = 1;
+                    }
+                    else
+                    {
+                        val = val / 10;
+                    }
                     //output += " val: " + val + Environment.NewLine;
                     min = 0;
                     while(input > min + val)
@@ -119,17 +137,28 @@ namespace WindowsFormsApp4
                         min = min + val;
                     }
                     //output += "min: " + min + Environment.NewLine;
-                    if(min < max / 10)
-                    {
-                        min = 0;
-                    }
                 }
             }
             else
             {
+                
                 //output += "input < min = false" + Environment.NewLine;
             }
             //File.AppendAllText(@"C:\Users\dominik.schneider\Documents\test.txt", output);
+            if(min < 0)
+            {
+                if((-1) * min < max / 10)
+                    {
+                        min = (-1) * (max / 10);
+                    }
+            }
+            else
+            {
+                 if(min < max / 10)
+                    {
+                        min = 0;
+                    }
+            }
         }
     }
 }
