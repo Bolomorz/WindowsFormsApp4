@@ -9,28 +9,86 @@ namespace WindowsFormsApp4
 {
     public class YSeries
     {
+        //-
+        //List of Values of y-Series
         public List<double> values = new List<double>();
+        //-
+
+        //-
+        //default max and min value for YAxis.Minimum YAxis.Maximum
         public int min, max; 
-        public double interval;
+        //-
+
+        //-
+        //setmin and setmax can be changed by user
+        //interval is (setmax-setmin)/10
+        public double setmin, setmax, interval;
+        //-
+
+        //-
+        //name for Legend; Color of Series
         public string name;
         public System.Drawing.Color color;
+        //-
 
         public YSeries(string sinput, System.Drawing.Color cinput)
         {
             name = sinput;
             color = cinput;
             values.Clear();
+
+            //-
+            //set min and max, s.t. firstInput < min AND firstInput > max
             min = int.MaxValue;
             max = int.MinValue;
+            //-
         }
 
         public void Add(double input)
         {
-            //Add value <input> to List
+            //Add value <input> to List; change min/max values if necessary
             values.Add(input);
             CompareMax(input);
             CompareMin(input);
+            setmin = min;
+            setmax = max;
             interval = (max - min) / 10;
+        }
+
+        public void ChangeSetMax(double input)
+        {
+            //User can change maximum of YAxis through TextBox
+            if(input > setmin)
+            {
+                setmax = input;
+                interval = (setmax - setmin) / 10;       
+            }
+        }
+
+        public void ChangeSetMin(double input)
+        {
+            //User can change minimum of YAxis through TextBox
+            if(input < setmax)
+            { 
+                setmin = input;
+                interval = (setmax - setmin) / 10;
+            }
+        }
+
+        public void ResetSetMax()
+        {
+            //reset maximum of YAxis to default value
+            
+            setmax = max;
+            interval = (setmax - setmin) / 10;
+        }
+
+        public void ResetSetMin()
+        {
+            //reset minimum of YAxis to default value
+
+            setmin = min;
+            interval = (setmax - setmin) / 10;
         }
 
         private void CompareMax(double input)
@@ -145,6 +203,9 @@ namespace WindowsFormsApp4
                 //output += "input < min = false" + Environment.NewLine;
             }
             //File.AppendAllText(@"C:\Users\dominik.schneider\Documents\test.txt", output);
+
+            //Compare minValue with maxValue
+            //if minvalue < maxvalue/10 then minvalue = 0
             if(min < 0)
             {
                 if((-1) * min < max / 10)

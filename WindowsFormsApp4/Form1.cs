@@ -43,7 +43,7 @@ namespace WindowsFormsApp4
 
         //-
         //Title of chart; current Date
-        //Title can be set through TextBox; Date will be calculated dynamically
+        //Title can be set through TextBox; Date will be calculated
         public string chartTitle, chartDate;
         //-
 
@@ -53,11 +53,52 @@ namespace WindowsFormsApp4
         public string filepath;
         //-
 
+        //-
+        //value of last x read in file
+        //if new value of x <= lastx, dont add xvalue
+        //=> to make sure x is steadily increasing (s.t. chart creates a function for each YSeries, withouth multiple values of x)
         double lastx;
+        //-
+
+        //-
+        //List of Buttons, one button for each YSeries
+        public List<Button> buttons = new List<Button>();
+        //
 
         public Form1()
         {
             InitializeComponent();
+        }
+
+        public double ReadString(string val)
+        {
+            //returns double value regardless of wether ',' or '.' is used as separator in string
+            double ret;
+            string str = "";
+            foreach(char c in val)
+            {
+                if(IsNumeric(c))
+                {
+                    str += c;
+                }
+                else if(c == ',' || c == '.')
+                {
+                    str += System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator;
+                }
+            }
+            ret = double.Parse(str, System.Globalization.NumberStyles.AllowDecimalPoint);
+            return ret;
+        }
+
+        private bool IsNumeric(char val)
+        {
+            //returns true if char val is Numeric
+            bool isNumeric = false;
+            if(val == '0' || val == '1' || val == '2' || val == '3' || val == '4' || val == '5' || val == '6' || val == '7' || val == '8' || val == '9')
+            {
+                isNumeric = true;
+            }
+            return isNumeric;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -98,7 +139,7 @@ namespace WindowsFormsApp4
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
             //-
-            //Text in textbox can only be overwritten by OpenFileDialog on ButtonClickEvent, cannot be manually overwritten
+            //Text in textbox can only be overwritten by OpenFileDialog on ButtonClickEvent, cannot be manually overwritten by userinput
             textBox1.Text = filepath;
             //-
 
@@ -113,11 +154,15 @@ namespace WindowsFormsApp4
         }
 
         private void CreateYAxis(
-            cc.Chart chart, 
-            cc.ChartArea area,
-            YSeries yseries,
+            cc.Chart chart,                         //default chart
+            cc.ChartArea area,                      //default chartArea
+            YSeries yseries,                        //YSeries object (with values of Y for each X in xval)
             float axisOffset, float labelsSize)
         {
+            //Create 2 additional chartAreas, one with position on default ChartArea, the other with position offset
+            
+            //-
+            //create new series according to values in object YSeries
             cc.Series series = new cc.Series();
             series.Name = yseries.name;
             for (int i = 0; i < yseries.values.Count(); i++)
@@ -131,7 +176,12 @@ namespace WindowsFormsApp4
             series.ChartType = cc.SeriesChartType.Line;
             series.BorderWidth = 2;
             chart.Series.Add(series);
+            //-
 
+            //-
+            //create new ChartArea for series
+            //same position as default ChartArea
+            //make AxisX and AxisY invisible
             cc.ChartArea areaSeries = chart.ChartAreas.Add("ChartArea_" + series.Name);
             areaSeries.BackColor = Color.Transparent;
             areaSeries.BorderColor = Color.Transparent;
@@ -148,18 +198,29 @@ namespace WindowsFormsApp4
             areaSeries.AxisY.LabelStyle.Enabled = false;
             areaSeries.AxisY.IsStartedFromZero = area.AxisY.IsStartedFromZero;
 
-            areaSeries.AxisY.Minimum = yseries.min;
-            areaSeries.AxisY.Maximum = yseries.max;
+            areaSeries.AxisY.Minimum = yseries.setmin;
+            areaSeries.AxisY.Maximum = yseries.setmax;
             areaSeries.AxisY.Interval = yseries.interval;
+            //-
 
+            //-
+            //set ChartArea of series to new created ChartArea
             series.ChartArea = areaSeries.Name;
+            //-
 
+            //-
+            //create new ChartArea for Copy of Series
+            //position with offset to the left
+            //make only YAxis visible
             cc.ChartArea areaAxis = chart.ChartAreas.Add("AxisY_" + series.ChartArea);
             areaAxis.BackColor = Color.Transparent;
             areaAxis.BorderColor = Color.Transparent;
             areaAxis.Position.FromRectangleF(chart.ChartAreas.FindByName(series.ChartArea).Position.ToRectangleF());
             areaAxis.InnerPlotPosition.FromRectangleF(chart.ChartAreas.FindByName(series.ChartArea).InnerPlotPosition.ToRectangleF());
 
+
+            //-
+            //create Copy of Series for new ChartArea
             cc.Series seriesCopy = chart.Series.Add(series.Name + "_Copy");
             seriesCopy.ChartType = series.ChartType;
             foreach (cc.DataPoint point in series.Points)
@@ -170,6 +231,7 @@ namespace WindowsFormsApp4
             seriesCopy.Color = Color.Transparent;
             seriesCopy.BorderColor = Color.Transparent;
             seriesCopy.ChartArea = areaAxis.Name;
+            //-
 
             areaAxis.AxisX.LineWidth = 0;
             areaAxis.AxisX.MajorGrid.Enabled = false;
@@ -184,26 +246,33 @@ namespace WindowsFormsApp4
             areaAxis.AxisX.Maximum = area.AxisX.Maximum;
             areaAxis.AxisX.Interval = area.AxisX.Interval;
 
-            areaAxis.AxisY.Minimum = yseries.min;
-            areaAxis.AxisY.Maximum = yseries.max;
+            areaAxis.AxisY.Minimum = yseries.setmin;
+            areaAxis.AxisY.Maximum = yseries.setmax;
             areaAxis.AxisY.Interval = yseries.interval;
 
             areaAxis.Position.X = axisOffset;
             areaAxis.InnerPlotPosition.X = areaAxis.InnerPlotPosition.X + labelsSize;
+            //-
         }
 
         private void CreateDataPoints(
             cc.Series series)
         {
+            //Create DataPoints in Graph for x-values which are closest to integers [x1, x2]
+            
             int index = 0;
             int c = series.Points.Count();
 
             for(int i = x1; i <= x2; i++)
             {
+                //let i iterate from x1 to x2
+
+                //foreach integer in [x1, x2], search for closest x value in Series to integer
                 bool cont = true;
                 double id = i;
                 while(cont)
                 {
+                    //find index of closest x value to integer id
                     double x = series.Points.ElementAt(index).XValue;
                     if(x < id)
                     {
@@ -229,23 +298,43 @@ namespace WindowsFormsApp4
                 series.Points.ElementAt(index).MarkerSize = 5;
             }
         }
+
         private void DrawChart()
         {
+            //Draw with values of currently read file
+            
+            //-
+            //delete old entries
             chart1.Series.Clear();
             chart1.ChartAreas.Clear();
             chart1.Titles.Clear();
             chart1.Legends.Clear();
+            foreach(Button b in buttons)
+            {
+                Controls.Remove(b);
+            }
+            buttons.Clear();
+            //-
 
+            //-
+            //create new default ChartArea
             cc.ChartArea c1 = new cc.ChartArea();
             c1.Name = "Default";
             chart1.ChartAreas.Add(c1);
+            //-
 
+            //-
+            //calculate offset 
             int leftoffset;
             int downoffset = 10;
             leftoffset = yval.Count() * 3 + 2;
+            //-
 
+
+            //-
+            //Set values for Y Axis and X Axis of default area
             chart1.ChartAreas.FindByName("Default").Position = new cc.ElementPosition(leftoffset, downoffset, 100-leftoffset, 100-downoffset);
-            chart1.ChartAreas.FindByName("Default").InnerPlotPosition = new cc.ElementPosition(0, 0, 90, 90);
+            chart1.ChartAreas.FindByName("Default").InnerPlotPosition = new cc.ElementPosition(0, 0, 95, 90);
             chart1.ChartAreas.FindByName("Default").AxisX.MajorGrid.Enabled = gridEnabled;
             chart1.ChartAreas.FindByName("Default").AxisX.MinorGrid.Enabled = gridEnabled;
             chart1.ChartAreas.FindByName("Default").AxisY.MajorGrid.Enabled = gridEnabled;
@@ -258,33 +347,48 @@ namespace WindowsFormsApp4
             chart1.ChartAreas.FindByName("Default").AxisY.Maximum = x2;
             chart1.ChartAreas.FindByName("Default").AxisX.IsStartedFromZero = true;
             chart1.ChartAreas.FindByName("Default").AxisX.Title = xvalname;
+            //-
 
+            //-
+            //Create Titles with Title and Date
             chart1.Titles.Add(new cc.Title(chartTitle));
             chart1.Titles.Add(new cc.Title(chartDate));
 
-            chart1.Titles.ElementAt(1).Position = new cc.ElementPosition(90, 0, 5, 5);
+            chart1.Titles.ElementAt(1).Position = new cc.ElementPosition(94, 0, 5, 5);
             chart1.Titles.ElementAt(0).Font = new Font("Arial", 20, FontStyle.Bold);
+            //-
 
+            //-
+            //Create Legend on top left
             chart1.Legends.Add(new cc.Legend("Legend1"));
             chart1.Legends.FindByName("Legend1").Position = new cc.ElementPosition(5, 0, 9, 9);
+            //-
 
+            //-
+            //invisible series to display x values on x Axis
             cc.Series xserie = new cc.Series();
             xserie.ChartType = cc.SeriesChartType.Line;
             xserie.IsVisibleInLegend = false;
             xserie.Color = Color.Transparent;
-            for(int i = 0; i < 11; i++)
+            for(int i = x1; i <= x2; i++)
             {
                 xserie.Points.AddXY(i, i);
             }
             chart1.Series.Add(xserie);
+            //-
 
+            //-
+            //Create Y Axis for each element in yval
             float offset = 0;
             foreach(YSeries yseries in yval)
             {
                 CreateYAxis(chart1, chart1.ChartAreas.FindByName("Default"), yseries, offset, 4);
                 offset += 3;
             }
+            //-
 
+            //-
+            //Create DataPoints for each element in yval
             if(xval.Count > 0)
             {
                 foreach(YSeries yseries in yval)
@@ -292,15 +396,21 @@ namespace WindowsFormsApp4
                     CreateDataPoints(chart1.Series.FindByName(yseries.name));
                 }
             }
+            //-
+
+            //-
+            //Create Button for each element in yval
+            CreateButtons();
+            //-
         }
 
         private void ReadData()
         {
             //read data from file
-
+            
             //-
             //value of last x added
-            //if value of new x <= lastx dont add to Series, so it always creates a steady function, not a relation
+            //if value of new x <= lastx dont add to Series, so it always creates a function
             //=> x is steadily increasing in displayed function (not decreasing or staying constant)
             lastx = double.MinValue;
             //-
@@ -318,7 +428,7 @@ namespace WindowsFormsApp4
                 //-
 
                 //-
-                //count counting lines in file
+                //counting lines in file
                 int count = 0;
                 //-
 
@@ -331,6 +441,7 @@ namespace WindowsFormsApp4
                     }
                     else
                     {
+                        //n. line of file
                         ReadLine(line);
                     }
                     count++;
@@ -350,25 +461,34 @@ namespace WindowsFormsApp4
 
         private void ReadFirstLine(string input)
         {
-            //read first line from file
+            //read first line of file
             //1. line: XAxisName 1.YAxisName ... n.YAxisName
 
+            //-
+            //separate line at ' '
             char[] separators = {' '};
 
             string[] axisnames = input.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+            //-
 
             Color[] colors = {Color.Red, Color.Blue, Color.Green, Color.Yellow, Color.Brown, Color.Orange, Color.Black};
 
+            //-
+            //counting entries in line
             int count = 0;
+            //
+
             foreach(string name in axisnames)
             {
                 if(count == 0)
                 {
-                    //first entry => XAxisName
+                    //1. entry => XAxisName
                     xvalname = name;
                 }
                 else
                 {
+                    //n. entry => YAxisName
+                    //Create new YSeries with input name and Color
                     int seriesCount = count - 1;
                     if(seriesCount < colors.Length)
                     {
@@ -388,24 +508,64 @@ namespace WindowsFormsApp4
             //read line from file
             //lineformat: xvalue yvalueOf1.Series ... yvalueOfN.Series
 
+            //-
+            //separate line at ' '
             char[] separators = {' '};
 
             string[] values = input.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+            //-
 
+            //-
+            //counting entries in values
             int count = 0;
+            //
+
             foreach(string val in values)
             {
                 if(count == 0)
                 {
-                    xval.Add(Convert.ToDouble(val));
+                    //1. entry => xvalue
+                    xval.Add(ReadString(val));
                 }
                 else
                 {
+                    //n. entry => yvalue of n-1. Series
                     int seriesCount = count - 1;
-                    yval[seriesCount].Add(Convert.ToDouble(val));
+                    yval[seriesCount].Add(ReadString(val));
                 }
                 count++;
             }
+        }
+
+        private void CreateButtons()
+        {
+            //Create Button for each YSeries in yval
+            int x = 80; int y = 110;
+            for(int i = 0; i < yval.Count(); i++)
+            {
+                Button nb = new Button();
+                nb.Location = new Point(x, y);
+                x += 100;
+                nb.Height = 40;
+                nb.Width = 100;
+                nb.BackColor = Color.Gainsboro;
+                nb.ForeColor = Color.Black;
+                nb.Text = (i+1) + " " + yval[i].name;
+                nb.Name = (i+1) + " " + yval[i].name;
+                nb.AccessibleName = i.ToString();
+                nb.Font = new Font("Arial", 12);
+                nb.Click += new EventHandler(NewButtonClick);
+                Controls.Add(nb);
+                buttons.Add(nb);
+            }
+        }
+
+        private void NewButtonClick(object sender, EventArgs e)
+        {
+            //on ButtonClick open form2 with according YSeries
+            Button nbc = (Button)sender;
+            int index = Convert.ToInt32(nbc.AccessibleName);
+            Form2 form2 = new Form2(yval[index]);
         }
     }
 }
