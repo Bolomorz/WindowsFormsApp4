@@ -15,64 +15,43 @@ namespace WindowsFormsApp4
 {
     public partial class Form1 : Form
     {
-        //-
-        //List of Values for each Series
-        //For each xval (x-coordinate) one yval (y-coordinate) in each Series
-        //for each xval[i] one yval[j].values[i] for each yval[j]
         public List<double> xval = new List<double>();
         public List<YSeries> yval = new List<YSeries>();
-        //-
 
-        //-
-        //Values x1 and x2 as Intervall which will be shown in chart [x1, x2]
-        //Can later be Set through 2 TextBoxes
         public int x1, x2;
-        //-
 
-        //-
-        //Wether a grid will be shown in chart or not
-        //Can later be Set by a CheckBox
         public bool gridEnabled;
-        //-
 
-        //-
-        //Title of the x-Axis
-        //Will be read out of file
         public string xvalname;
-        //-
 
-        //-
-        //Title of chart; current Date
-        //Title can be set through TextBox; Date will be calculated
         public string chartTitle, chartDate;
-        //-
 
-        //-
-        //path of file to read
-        //can be set with OpenFileDialog through ButtonClick
+        /// <summary>
+        /// path to currently selected file
+        /// </summary>
         public string filepath;
-        //-
 
-        //-
-        //value of last x read in file
-        //if new value of x <= lastx, dont add xvalue
-        //=> to make sure x is steadily increasing (s.t. chart creates a function for each YSeries, withouth multiple values of x)
         double lastx;
-        //-
 
-        //-
-        //List of Buttons, one button for each YSeries
+        /// <summary>
+        /// List of buttons, one for each YSeries
+        /// </summary>
         public List<Button> buttons = new List<Button>();
-        //
+
 
         public Form1()
         {
             InitializeComponent();
         }
 
+        /// <summary>
+        /// Return double value of input string.
+        /// Works regardless of wether ',' or '.' is used as separator.
+        /// </summary>
+        /// <param name="val">input string</param>
+        /// <returns></returns>
         public double ReadString(string val)
         {
-            //returns double value regardless of wether ',' or '.' is used as separator in string
             double ret;
             string str = "";
             foreach(char c in val)
@@ -90,9 +69,14 @@ namespace WindowsFormsApp4
             return ret;
         }
 
+        /// <summary>
+        /// Test, if char is numeric.
+        /// Returns true, if input char is numeric.
+        /// </summary>
+        /// <param name="val">input char</param>
+        /// <returns></returns>
         private bool IsNumeric(char val)
         {
-            //returns true if char val is Numeric
             bool isNumeric = false;
             if(val == '0' || val == '1' || val == '2' || val == '3' || val == '4' || val == '5' || val == '6' || val == '7' || val == '8' || val == '9')
             {
@@ -110,10 +94,13 @@ namespace WindowsFormsApp4
             chartTitle = "TESTTITEL";
         }
 
+        /// <summary>
+        /// On ButtonClickEvent execute OpenFileDialog to select file to open and read
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button1_Click(object sender, EventArgs e)
         {
-            //OpenFileDialog on ButtonClickEvent to select file to open
-            
             string path = "";
 
             OpenFileDialog fd = new OpenFileDialog();
@@ -129,40 +116,43 @@ namespace WindowsFormsApp4
                 path = fd.FileName;
             }
 
-            //-
-            //Show opened file in TextBox
             filepath = path;
             textBox1.Text = path;
-            //-
         }
 
+        /// <summary>
+        /// read from file, if TextBox content is changed by OpenFileDialog
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
-            //-
-            //Text in textbox can only be overwritten by OpenFileDialog on ButtonClickEvent, cannot be manually overwritten by userinput
             textBox1.Text = filepath;
-            //-
 
-            //-
-            //if Text changed from OpenFileDialog -> read data from file, draw chart
             if(textBox1.Text != "")
             {
                 ReadData();
                 DrawChart();
             }
-            //-
         }
 
+        /// <summary>
+        /// Create YAxis for YSeries.
+        /// Create 2 ChartAreas;
+        /// 1. ChartArea on top of default ChartArea -> show only Series;
+        /// 2. ChartArea with offset to the left to default ChartArea -> show only YAxis
+        /// </summary>
+        /// <param name="chart">default Chart</param>
+        /// <param name="area">default ChartArea</param>
+        /// <param name="yseries">current YSeries</param>
+        /// <param name="axisOffset"></param>
+        /// <param name="labelsSize"></param>
         private void CreateYAxis(
-            cc.Chart chart,                         //default chart
-            cc.ChartArea area,                      //default chartArea
-            YSeries yseries,                        //YSeries object (with values of Y for each X in xval)
+            cc.Chart chart,                         
+            cc.ChartArea area,                      
+            YSeries yseries,                        
             float axisOffset, float labelsSize)
         {
-            //Create 2 additional chartAreas, one with position on default ChartArea, the other with position offset
-            
-            //-
-            //create new series according to values in object YSeries
             cc.Series series = new cc.Series();
             series.Name = yseries.name;
             for (int i = 0; i < yseries.values.Count(); i++)
@@ -176,12 +166,7 @@ namespace WindowsFormsApp4
             series.ChartType = cc.SeriesChartType.Line;
             series.BorderWidth = 2;
             chart.Series.Add(series);
-            //-
 
-            //-
-            //create new ChartArea for series
-            //same position as default ChartArea
-            //make AxisX and AxisY invisible
             cc.ChartArea areaSeries = chart.ChartAreas.Add("ChartArea_" + series.Name);
             areaSeries.BackColor = Color.Transparent;
             areaSeries.BorderColor = Color.Transparent;
@@ -201,26 +186,15 @@ namespace WindowsFormsApp4
             areaSeries.AxisY.Minimum = yseries.setmin;
             areaSeries.AxisY.Maximum = yseries.setmax;
             areaSeries.AxisY.Interval = yseries.interval;
-            //-
 
-            //-
-            //set ChartArea of series to new created ChartArea
             series.ChartArea = areaSeries.Name;
-            //-
 
-            //-
-            //create new ChartArea for Copy of Series
-            //position with offset to the left
-            //make only YAxis visible
             cc.ChartArea areaAxis = chart.ChartAreas.Add("AxisY_" + series.ChartArea);
             areaAxis.BackColor = Color.Transparent;
             areaAxis.BorderColor = Color.Transparent;
             areaAxis.Position.FromRectangleF(chart.ChartAreas.FindByName(series.ChartArea).Position.ToRectangleF());
             areaAxis.InnerPlotPosition.FromRectangleF(chart.ChartAreas.FindByName(series.ChartArea).InnerPlotPosition.ToRectangleF());
 
-
-            //-
-            //create Copy of Series for new ChartArea
             cc.Series seriesCopy = chart.Series.Add(series.Name + "_Copy");
             seriesCopy.ChartType = series.ChartType;
             foreach (cc.DataPoint point in series.Points)
@@ -231,7 +205,6 @@ namespace WindowsFormsApp4
             seriesCopy.Color = Color.Transparent;
             seriesCopy.BorderColor = Color.Transparent;
             seriesCopy.ChartArea = areaAxis.Name;
-            //-
 
             areaAxis.AxisX.LineWidth = 0;
             areaAxis.AxisX.MajorGrid.Enabled = false;
@@ -252,27 +225,25 @@ namespace WindowsFormsApp4
 
             areaAxis.Position.X = axisOffset;
             areaAxis.InnerPlotPosition.X = areaAxis.InnerPlotPosition.X + labelsSize;
-            //-
         }
 
+        /// <summary>
+        /// Create data points for each YSeries.
+        /// Find closest xvalue in xval to integers in [x1, x2]
+        /// </summary>
+        /// <param name="series"></param>
         private void CreateDataPoints(
             cc.Series series)
         {
-            //Create DataPoints in Graph for x-values which are closest to integers [x1, x2]
-            
             int index = 0;
             int c = series.Points.Count();
 
             for(int i = x1; i <= x2; i++)
             {
-                //let i iterate from x1 to x2
-
-                //foreach integer in [x1, x2], search for closest x value in Series to integer
                 bool cont = true;
                 double id = i;
                 while(cont)
                 {
-                    //find index of closest x value to integer id
                     double x = series.Points.ElementAt(index).XValue;
                     if(x < id)
                     {
@@ -299,12 +270,11 @@ namespace WindowsFormsApp4
             }
         }
 
-        private void DrawChart()
+        /// <summary>
+        /// Draw chart with values of currently listed YSeries
+        /// </summary>
+        public void DrawChart()
         {
-            //Draw with values of currently read file
-            
-            //-
-            //delete old entries
             chart1.Series.Clear();
             chart1.ChartAreas.Clear();
             chart1.Titles.Clear();
@@ -314,25 +284,15 @@ namespace WindowsFormsApp4
                 Controls.Remove(b);
             }
             buttons.Clear();
-            //-
 
-            //-
-            //create new default ChartArea
             cc.ChartArea c1 = new cc.ChartArea();
             c1.Name = "Default";
             chart1.ChartAreas.Add(c1);
-            //-
 
-            //-
-            //calculate offset 
             int leftoffset;
             int downoffset = 10;
             leftoffset = yval.Count() * 3 + 2;
-            //-
 
-
-            //-
-            //Set values for Y Axis and X Axis of default area
             chart1.ChartAreas.FindByName("Default").Position = new cc.ElementPosition(leftoffset, downoffset, 100-leftoffset, 100-downoffset);
             chart1.ChartAreas.FindByName("Default").InnerPlotPosition = new cc.ElementPosition(0, 0, 95, 90);
             chart1.ChartAreas.FindByName("Default").AxisX.MajorGrid.Enabled = gridEnabled;
@@ -347,25 +307,16 @@ namespace WindowsFormsApp4
             chart1.ChartAreas.FindByName("Default").AxisY.Maximum = x2;
             chart1.ChartAreas.FindByName("Default").AxisX.IsStartedFromZero = true;
             chart1.ChartAreas.FindByName("Default").AxisX.Title = xvalname;
-            //-
 
-            //-
-            //Create Titles with Title and Date
             chart1.Titles.Add(new cc.Title(chartTitle));
             chart1.Titles.Add(new cc.Title(chartDate));
 
             chart1.Titles.ElementAt(1).Position = new cc.ElementPosition(94, 0, 5, 5);
             chart1.Titles.ElementAt(0).Font = new Font("Arial", 20, FontStyle.Bold);
-            //-
 
-            //-
-            //Create Legend on top left
             chart1.Legends.Add(new cc.Legend("Legend1"));
             chart1.Legends.FindByName("Legend1").Position = new cc.ElementPosition(5, 0, 9, 9);
-            //-
 
-            //-
-            //invisible series to display x values on x Axis
             cc.Series xserie = new cc.Series();
             xserie.ChartType = cc.SeriesChartType.Line;
             xserie.IsVisibleInLegend = false;
@@ -375,20 +326,14 @@ namespace WindowsFormsApp4
                 xserie.Points.AddXY(i, i);
             }
             chart1.Series.Add(xserie);
-            //-
 
-            //-
-            //Create Y Axis for each element in yval
             float offset = 0;
             foreach(YSeries yseries in yval)
             {
                 CreateYAxis(chart1, chart1.ChartAreas.FindByName("Default"), yseries, offset, 4);
                 offset += 3;
             }
-            //-
 
-            //-
-            //Create DataPoints for each element in yval
             if(xval.Count > 0)
             {
                 foreach(YSeries yseries in yval)
@@ -396,59 +341,36 @@ namespace WindowsFormsApp4
                     CreateDataPoints(chart1.Series.FindByName(yseries.name));
                 }
             }
-            //-
 
-            //-
-            //Create Button for each element in yval
             CreateButtons();
-            //-
         }
 
+        /// <summary>
+        /// Read data from file in filepath.
+        /// </summary>
         private void ReadData()
         {
-            //read data from file
-            
-            //-
-            //value of last x added
-            //if value of new x <= lastx dont add to Series, so it always creates a function
-            //=> x is steadily increasing in displayed function (not decreasing or staying constant)
             lastx = double.MinValue;
-            //-
 
             if(System.IO.File.Exists(filepath))
             {
-                //if file in filepath exists, read each line of file for input as data
-                //1. line of file:<xAxisName> <1.SeriesName> <2.SeriesName> ... <n.SeriesName>
-                //m. line of file:<m.XValue> <m.YValOf1.Series> ... <m.YValOfn.Series>
-                
-                //-
-                //Clear Lists
                 xval.Clear();
                 yval.Clear();
-                //-
 
-                //-
-                //counting lines in file
                 int count = 0;
-                //-
 
                 foreach (string line in System.IO.File.ReadLines(filepath))
                 {
                     if(count == 0)
                     {
-                        //1. line of file
                         ReadFirstLine(line);
                     }
                     else
                     {
-                        //n. line of file
                         ReadLine(line);
                     }
                     count++;
                 }
-
-                //-
-                //for now for testing x values in interval [0, 10]
                 //-----
                 //TODO 
                 //set through TextBoxes 
@@ -458,37 +380,30 @@ namespace WindowsFormsApp4
             }
 
         }
-
+        
+        /// <summary>
+        /// Read 1. line of file. Create YSeries.
+        /// lineformat: xAxisName YAxisName1.Series ... YAxisNameN.Series
+        /// </summary>
+        /// <param name="input"></param>
         private void ReadFirstLine(string input)
         {
-            //read first line of file
-            //1. line: XAxisName 1.YAxisName ... n.YAxisName
-
-            //-
-            //separate line at ' '
             char[] separators = {' '};
 
             string[] axisnames = input.Split(separators, StringSplitOptions.RemoveEmptyEntries);
-            //-
 
             Color[] colors = {Color.Red, Color.Blue, Color.Green, Color.Yellow, Color.Brown, Color.Orange, Color.Black};
 
-            //-
-            //counting entries in line
             int count = 0;
-            //
 
             foreach(string name in axisnames)
             {
                 if(count == 0)
                 {
-                    //1. entry => XAxisName
                     xvalname = name;
                 }
                 else
                 {
-                    //n. entry => YAxisName
-                    //Create new YSeries with input name and Color
                     int seriesCount = count - 1;
                     if(seriesCount < colors.Length)
                     {
@@ -503,33 +418,27 @@ namespace WindowsFormsApp4
             }
         }
 
+        /// <summary>
+        /// Read n. line of file. Add to each YSeries.
+        /// lineformat: xvalue yvalueOf1.Series ... yvalueOfn.Series
+        /// </summary>
+        /// <param name="input"></param>
         private void ReadLine(string input)
         {
-            //read line from file
-            //lineformat: xvalue yvalueOf1.Series ... yvalueOfN.Series
-
-            //-
-            //separate line at ' '
             char[] separators = {' '};
 
             string[] values = input.Split(separators, StringSplitOptions.RemoveEmptyEntries);
-            //-
 
-            //-
-            //counting entries in values
             int count = 0;
-            //
 
             foreach(string val in values)
             {
                 if(count == 0)
                 {
-                    //1. entry => xvalue
                     xval.Add(ReadString(val));
                 }
                 else
                 {
-                    //n. entry => yvalue of n-1. Series
                     int seriesCount = count - 1;
                     yval[seriesCount].Add(ReadString(val));
                 }
@@ -537,9 +446,11 @@ namespace WindowsFormsApp4
             }
         }
 
+        /// <summary>
+        /// Create Button for each YSeries in yval
+        /// </summary>
         private void CreateButtons()
         {
-            //Create Button for each YSeries in yval
             int x = 80; int y = 110;
             for(int i = 0; i < yval.Count(); i++)
             {
@@ -560,12 +471,17 @@ namespace WindowsFormsApp4
             }
         }
 
+        /// <summary>
+        /// On ButtonClickEvent -> Open Form2 with according YSeries
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void NewButtonClick(object sender, EventArgs e)
         {
-            //on ButtonClick open form2 with according YSeries
             Button nbc = (Button)sender;
             int index = Convert.ToInt32(nbc.AccessibleName);
-            Form2 form2 = new Form2(yval[index]);
+            Form2 form2 = new Form2(yval[index], this);
+            form2.Show();
         }
     }
 }

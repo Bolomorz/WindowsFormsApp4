@@ -9,44 +9,37 @@ namespace WindowsFormsApp4
 {
     public class YSeries
     {
-        //-
-        //List of Values of y-Series
         public List<double> values = new List<double>();
-        //-
 
-        //-
-        //default max and min value for YAxis.Minimum YAxis.Maximum
         public int min, max; 
-        //-
 
-        //-
-        //setmin and setmax can be changed by user
-        //interval is (setmax-setmin)/10
         public double setmin, setmax, interval;
-        //-
 
-        //-
-        //name for Legend; Color of Series
         public string name;
         public System.Drawing.Color color;
-        //-
 
+        /// <summary>
+        /// Create YSeries with input name and input color.
+        /// </summary>
+        /// <param name="sinput">input name</param>
+        /// <param name="cinput">input color</param>
         public YSeries(string sinput, System.Drawing.Color cinput)
         {
             name = sinput;
             color = cinput;
             values.Clear();
 
-            //-
-            //set min and max, s.t. firstInput < min AND firstInput > max
             min = int.MaxValue;
             max = int.MinValue;
-            //-
         }
 
+        /// <summary>
+        /// Add input value to valuesList.
+        /// Change max and min value if necessary.
+        /// </summary>
+        /// <param name="input"></param>
         public void Add(double input)
         {
-            //Add value <input> to List; change min/max values if necessary
             values.Add(input);
             CompareMax(input);
             CompareMin(input);
@@ -55,9 +48,12 @@ namespace WindowsFormsApp4
             interval = (max - min) / 10;
         }
 
+        /// <summary>
+        /// Change max value to input value.
+        /// </summary>
+        /// <param name="input"></param>
         public void ChangeSetMax(double input)
         {
-            //User can change maximum of YAxis through TextBox
             if(input > setmin)
             {
                 setmax = input;
@@ -65,9 +61,12 @@ namespace WindowsFormsApp4
             }
         }
 
+        /// <summary>
+        /// Change min value to input value.
+        /// </summary>
+        /// <param name="input"></param>
         public void ChangeSetMin(double input)
         {
-            //User can change minimum of YAxis through TextBox
             if(input < setmax)
             { 
                 setmin = input;
@@ -75,37 +74,38 @@ namespace WindowsFormsApp4
             }
         }
 
+        /// <summary>
+        /// Reset max value to default value.
+        /// </summary>
         public void ResetSetMax()
         {
-            //reset maximum of YAxis to default value
-            
             setmax = max;
             interval = (setmax - setmin) / 10;
         }
 
+        /// <summary>
+        /// Reset min value to default value.
+        /// </summary>
         public void ResetSetMin()
         {
-            //reset minimum of YAxis to default value
-
             setmin = min;
             interval = (setmax - setmin) / 10;
         }
 
+        /// <summary>
+        /// Compare input value with max value.
+        /// Change max value if necessary.
+        /// s.t. input = 324 => max = 400
+        /// </summary>
+        /// <param name="input"></param>
         private void CompareMax(double input)
         {
-            //
-            //string output = Environment.NewLine + "CompareMax(" + input + ")" + max + Environment.NewLine;
-            //Compare <input> with current maxValue, change maxValue if necessary
             if(input > max)
             {
-                //output += "input > max = true" + Environment.NewLine;
                 int val = 1;
 
-                //-
-                //Find position of <value>, f.e. input = 345 => val = 100;
                 while(input > val)
                 {
-                    //output += "input: " + input + " val: " + val + Environment.NewLine;
                     val = val * 10;
                 }
                 if(val == 1)
@@ -116,41 +116,30 @@ namespace WindowsFormsApp4
                 {
                     val = val / 10;
                 }
-                //output += val + Environment.NewLine;
-                //-
-
-                //-
-                //Find new maxvalue from <value>, f.e. input = 345 => max = 400;
                 max = 0;
                 while(input > max)
                 {
-                    //output += "max: " + max + " val: " + val + Environment.NewLine;
                     max = max + val;
                 }
-                //-
             }
-            else
-            {
-                //output += "input > max = false" + Environment.NewLine;
-            }
-            //File.AppendAllText(@"C:\Users\dominik.schneider\Documents\test.txt", output);
         }
 
+        /// <summary>
+        /// Compare input value with min value.
+        /// Change min value if necessary.
+        /// s.t. input = 324 => min = 300
+        /// </summary>
+        /// <param name="input"></param>
         private void CompareMin(double input)
         {
-            //string output = Environment.NewLine + "CompareMin(" + input + ")" + min + Environment.NewLine;
-            //Compare <input> with current minValue, change minValue if necessary
             if (input < min)
             {
-                //output += "input < min = true" + Environment.NewLine; 
                 int val;
                 if(input < 0)
                 {
-                    //output += "input < 0 = true" + Environment.NewLine;
                     val = -1;
                     while (input < val)
                     {
-                        //output += "input: " + input + " val: " + val + Environment.NewLine;
                         val = val * 10;
                     }
                     if(val == -1)
@@ -161,22 +150,17 @@ namespace WindowsFormsApp4
                     {
                         val = val / 10;
                     }
-                    //output += "val: " + val + Environment.NewLine;
                     min = 0;
                     while(input < min)
-                    {
-                        //output += "input: " + input + " min: " + min + Environment.NewLine;
+                    { 
                         min = min + val;
                     }
-                    //output += "min: " + min + Environment.NewLine;
                 }
                 else
                 {
-                    //output += "input < 0 = false" + Environment.NewLine;
                     val = 1;
                     while (input > val)
                     {
-                        //output += "input: " + input + " val: " + val + Environment.NewLine;
                         val = val * 10;
                     }
                     if(val == 1)
@@ -187,38 +171,27 @@ namespace WindowsFormsApp4
                     {
                         val = val / 10;
                     }
-                    //output += " val: " + val + Environment.NewLine;
                     min = 0;
                     while(input > min + val)
                     {
-                        //output += "input: " + input + " min: " + min + Environment.NewLine;
                         min = min + val;
                     }
-                    //output += "min: " + min + Environment.NewLine;
+                }
+            }
+
+            if(min < 0)
+            {
+                if((-1) * min < max / 10)
+                {
+                    min = (-1) * (max / 10);
                 }
             }
             else
             {
-                
-                //output += "input < min = false" + Environment.NewLine;
-            }
-            //File.AppendAllText(@"C:\Users\dominik.schneider\Documents\test.txt", output);
-
-            //Compare minValue with maxValue
-            //if minvalue < maxvalue/10 then minvalue = 0
-            if(min < 0)
-            {
-                if((-1) * min < max / 10)
-                    {
-                        min = (-1) * (max / 10);
-                    }
-            }
-            else
-            {
-                 if(min < max / 10)
-                    {
-                        min = 0;
-                    }
+                if(min < max / 10)
+                {
+                    min = 0;
+                }
             }
         }
     }
