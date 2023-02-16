@@ -18,6 +18,8 @@ namespace WindowsFormsApp4
         public string name;
         public System.Drawing.Color color;
 
+        public bool active;
+
         /// <summary>
         /// Create YSeries with input name and input color.
         /// </summary>
@@ -31,6 +33,8 @@ namespace WindowsFormsApp4
 
             min = int.MaxValue;
             max = int.MinValue;
+
+            active = true;
         }
 
         /// <summary>
@@ -45,7 +49,7 @@ namespace WindowsFormsApp4
             CompareMin(input);
             setmin = min;
             setmax = max;
-            interval = (max - min) / 10;
+            interval = (double)(max - min) / 10.0;
         }
 
         /// <summary>
@@ -57,7 +61,7 @@ namespace WindowsFormsApp4
             if(input > setmin)
             {
                 setmax = input;
-                interval = (setmax - setmin) / 10;       
+                interval = (double)(setmax - setmin) / 10.0;       
             }
         }
 
@@ -70,7 +74,7 @@ namespace WindowsFormsApp4
             if(input < setmax)
             { 
                 setmin = input;
-                interval = (setmax - setmin) / 10;
+                interval = (double)(setmax - setmin) / 10.0;
             }
         }
 
@@ -80,7 +84,7 @@ namespace WindowsFormsApp4
         public void ResetSetMax()
         {
             setmax = max;
-            interval = (setmax - setmin) / 10;
+            interval = (double)(setmax - setmin) / 10.0;
         }
 
         /// <summary>
@@ -89,7 +93,7 @@ namespace WindowsFormsApp4
         public void ResetSetMin()
         {
             setmin = min;
-            interval = (setmax - setmin) / 10;
+            interval = (double)(setmax - setmin) / 10.0;
         }
 
         /// <summary>

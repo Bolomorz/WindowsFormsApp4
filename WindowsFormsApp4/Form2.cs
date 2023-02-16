@@ -14,10 +14,10 @@ namespace WindowsFormsApp4
     {
         YSeries series;
         Form1 parent;
-        public Form2(YSeries series, Form1 par)
+        public Form2(YSeries ser, Form1 par)
         {
             InitializeComponent();
-            this.series = series;
+            this.series = ser;
             parent = par;
         }
 
@@ -31,6 +31,14 @@ namespace WindowsFormsApp4
             label3.Text = "Current Series: " + series.name;
             textBox1.Text = series.setmax.ToString();
             textBox2.Text = series.setmin.ToString();
+            if(series.active)
+            {
+                checkBox1.Checked = true;
+            }
+            else
+            {
+                checkBox1.Checked = false;
+            }
         }
 
         /// <summary>
@@ -106,6 +114,23 @@ namespace WindowsFormsApp4
 
             parent.DrawChart();
             this.Close();
+        }
+
+        /// <summary>
+        /// On CheckBoxCheckedChangedEvent set series active or inaktive
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            if(checkBox1.Checked)
+            {
+                series.active = true;
+            }
+            else
+            {
+                series.active = false;
+            }
         }
     }
 }

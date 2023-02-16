@@ -18,7 +18,7 @@ namespace WindowsFormsApp4
         public List<double> xval = new List<double>();
         public List<YSeries> yval = new List<YSeries>();
 
-        public int x1, x2;
+        public int x1, x2, defx1, defx2;
 
         public bool gridEnabled;
 
@@ -50,7 +50,7 @@ namespace WindowsFormsApp4
         /// </summary>
         /// <param name="val">input string</param>
         /// <returns></returns>
-        public double ReadString(string val)
+        public static double ReadString(string val)
         {
             double ret;
             string str = "";
@@ -75,7 +75,7 @@ namespace WindowsFormsApp4
         /// </summary>
         /// <param name="val">input char</param>
         /// <returns></returns>
-        private bool IsNumeric(char val)
+        private static bool IsNumeric(char val)
         {
             bool isNumeric = false;
             if(val == '0' || val == '1' || val == '2' || val == '3' || val == '4' || val == '5' || val == '6' || val == '7' || val == '8' || val == '9')
@@ -105,7 +105,7 @@ namespace WindowsFormsApp4
 
             OpenFileDialog fd = new OpenFileDialog();
             fd.Title = "Open File Dialog";
-            fd.InitialDirectory = @"C:\Users\dominik.schneider\Documents\";
+            fd.InitialDirectory = @"C:\Users\dominik.schneider\Documents\YAxisAppFiles\";
             fd.Filter = "All files (*.txt) | *.txt";
             fd.FilterIndex = 1;
             fd.Multiselect = false;
@@ -228,7 +228,7 @@ namespace WindowsFormsApp4
         }
 
         /// <summary>
-        /// Create data points for each YSeries.
+        /// Create data points for YSeries.
         /// Find closest xvalue in xval to integers in [x1, x2]
         /// </summary>
         /// <param name="series"></param>
@@ -238,7 +238,7 @@ namespace WindowsFormsApp4
             int index = 0;
             int c = series.Points.Count();
 
-            for(int i = x1; i <= x2; i++)
+            for(double i = x1; i <= x2; i+=0.5)
             {
                 bool cont = true;
                 double id = i;
@@ -267,11 +267,12 @@ namespace WindowsFormsApp4
                 series.Points.ElementAt(index).MarkerStyle = cc.MarkerStyle.Circle;
                 series.Points.ElementAt(index).MarkerColor = series.Color;
                 series.Points.ElementAt(index).MarkerSize = 5;
+                series.Points.ElementAt(index).ToolTip = "#SERIESNAME : X=#VALX, Y=#VALY";
             }
         }
 
         /// <summary>
-        /// Draw chart with values of currently listed YSeries
+        /// Draw chart with values of currently active YSeries
         /// </summary>
         public void DrawChart()
         {
@@ -291,7 +292,15 @@ namespace WindowsFormsApp4
 
             int leftoffset;
             int downoffset = 10;
-            leftoffset = yval.Count() * 3 + 2;
+            int count = 0;
+            foreach(YSeries yseries in yval)
+            {
+                if(yseries.active)
+                {
+                    count++;
+                }
+            }
+            leftoffset = count * 3 + 2;
 
             chart1.ChartAreas.FindByName("Default").Position = new cc.ElementPosition(leftoffset, downoffset, 100-leftoffset, 100-downoffset);
             chart1.ChartAreas.FindByName("Default").InnerPlotPosition = new cc.ElementPosition(0, 0, 95, 90);
@@ -299,8 +308,8 @@ namespace WindowsFormsApp4
             chart1.ChartAreas.FindByName("Default").AxisX.MinorGrid.Enabled = gridEnabled;
             chart1.ChartAreas.FindByName("Default").AxisY.MajorGrid.Enabled = gridEnabled;
             chart1.ChartAreas.FindByName("Default").AxisY.MinorGrid.Enabled = gridEnabled;
-            chart1.ChartAreas.FindByName("Default").AxisX.Interval = (x2 - x1) / 10;
-            chart1.ChartAreas.FindByName("Default").AxisY.Interval = (x2 - x1) / 10;
+            chart1.ChartAreas.FindByName("Default").AxisX.Interval = (double)(x2 - x1) / 10.0;
+            chart1.ChartAreas.FindByName("Default").AxisY.Interval = (double)(x2 - x1) / 10.0;
             chart1.ChartAreas.FindByName("Default").AxisX.Minimum = x1;
             chart1.ChartAreas.FindByName("Default").AxisX.Maximum = x2;
             chart1.ChartAreas.FindByName("Default").AxisY.Minimum = x1;
@@ -330,15 +339,21 @@ namespace WindowsFormsApp4
             float offset = 0;
             foreach(YSeries yseries in yval)
             {
-                CreateYAxis(chart1, chart1.ChartAreas.FindByName("Default"), yseries, offset, 4);
-                offset += 3;
+                if(yseries.active)
+                {
+                    CreateYAxis(chart1, chart1.ChartAreas.FindByName("Default"), yseries, offset, 4);
+                    offset += 3;
+                }
             }
 
             if(xval.Count > 0)
             {
                 foreach(YSeries yseries in yval)
                 {
-                    CreateDataPoints(chart1.Series.FindByName(yseries.name));
+                    if(yseries.active)
+                    {
+                        CreateDataPoints(chart1.Series.FindByName(yseries.name));
+                    }
                 }
             }
 
@@ -371,12 +386,11 @@ namespace WindowsFormsApp4
                     }
                     count++;
                 }
-                //-----
-                //TODO 
-                //set through TextBoxes 
-                x1 = 0;
-                x2 = 10;
-                //-
+
+                defx1 = 0;
+                defx2 = 10;
+                x1 = defx1;
+                x2 = defx2;
             }
 
         }
@@ -392,7 +406,7 @@ namespace WindowsFormsApp4
 
             string[] axisnames = input.Split(separators, StringSplitOptions.RemoveEmptyEntries);
 
-            Color[] colors = {Color.Red, Color.Blue, Color.Green, Color.Yellow, Color.Brown, Color.Orange, Color.Black};
+            Color[] colors = {Color.Red, Color.Blue, Color.Green, Color.Orange, Color.Brown, Color.Yellow, Color.Black};
 
             int count = 0;
 
@@ -405,7 +419,7 @@ namespace WindowsFormsApp4
                 else
                 {
                     int seriesCount = count - 1;
-                    if(seriesCount < colors.Length)
+                    if(seriesCount < colors.Length-1)
                     {
                         yval.Add(new YSeries(name, colors[seriesCount]));
                     }
@@ -429,20 +443,14 @@ namespace WindowsFormsApp4
 
             string[] values = input.Split(separators, StringSplitOptions.RemoveEmptyEntries);
 
-            int count = 0;
-
-            foreach(string val in values)
+            if(ReadString(values[0]) > lastx)
             {
-                if(count == 0)
+                xval.Add(ReadString(values[0]));
+                for(int i = 1; i < values.Length; i++)
                 {
-                    xval.Add(ReadString(val));
+                    yval[i - 1].Add(ReadString(values[i]));
                 }
-                else
-                {
-                    int seriesCount = count - 1;
-                    yval[seriesCount].Add(ReadString(val));
-                }
-                count++;
+                lastx = ReadString(values[0]);
             }
         }
 
@@ -452,6 +460,21 @@ namespace WindowsFormsApp4
         private void CreateButtons()
         {
             int x = 80; int y = 110;
+
+            Button xb = new Button();
+            xb.Location = new Point(x, y);
+            x += 100;
+            xb.Height = 40;
+            xb.Width = 100;
+            xb.BackColor = Color.Gainsboro;
+            xb.ForeColor = Color.Black;
+            xb.Text = "X: " + xvalname;
+            xb.Name = "X: " + xvalname;
+            xb.Font = new Font("Arial", 12);
+            xb.Click += new EventHandler(XButtonClick);
+            Controls.Add(xb);
+            buttons.Add(xb);
+
             for(int i = 0; i < yval.Count(); i++)
             {
                 Button nb = new Button();
@@ -461,11 +484,11 @@ namespace WindowsFormsApp4
                 nb.Width = 100;
                 nb.BackColor = Color.Gainsboro;
                 nb.ForeColor = Color.Black;
-                nb.Text = (i+1) + " " + yval[i].name;
-                nb.Name = (i+1) + " " + yval[i].name;
-                nb.AccessibleName = i.ToString();
+                nb.Text = "Y" + (i+1) + ": " + yval[i].name;
+                nb.Name = "Y" + (i+1) + ": " + yval[i].name;
+                nb.Tag = i;
                 nb.Font = new Font("Arial", 12);
-                nb.Click += new EventHandler(NewButtonClick);
+                nb.Click += new EventHandler(YButtonClick);
                 Controls.Add(nb);
                 buttons.Add(nb);
             }
@@ -476,12 +499,23 @@ namespace WindowsFormsApp4
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void NewButtonClick(object sender, EventArgs e)
+        private void YButtonClick(object sender, EventArgs e)
         {
             Button nbc = (Button)sender;
-            int index = Convert.ToInt32(nbc.AccessibleName);
-            Form2 form2 = new Form2(yval[index], this);
-            form2.Show();
+            int index = (int)nbc.Tag;
+            Form2 child = new Form2(yval[index], this);
+            child.Show();
+        }
+
+        /// <summary>
+        /// On ButtonCLickEvent -> Open Form3
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void XButtonClick(object sender, EventArgs e)
+        {
+            Form3 child = new Form3(this);
+            child.Show();
         }
     }
 }
