@@ -37,6 +37,9 @@ namespace WindowsFormsApp4
         /// List of buttons, one for each YSeries
         /// </summary>
         public List<Button> buttons = new List<Button>();
+        public Label ChartTitleLabel;
+        public TextBox ChartTitleTextBox;
+        public CheckBox EnableGridCheckBox;
 
 
         public Form1()
@@ -54,6 +57,7 @@ namespace WindowsFormsApp4
         {
             double ret;
             string str = "";
+
             foreach(char c in val)
             {
                 if(IsNumeric(c))
@@ -65,7 +69,16 @@ namespace WindowsFormsApp4
                     str += System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator;
                 }
             }
-            ret = double.Parse(str, System.Globalization.NumberStyles.AllowDecimalPoint);
+
+            if(str != "")
+            {
+                ret = double.Parse(str, System.Globalization.NumberStyles.AllowDecimalPoint);
+            }
+            else
+            {
+                ret = 0;
+            }
+
             return ret;
         }
 
@@ -75,7 +88,7 @@ namespace WindowsFormsApp4
         /// </summary>
         /// <param name="val">input char</param>
         /// <returns></returns>
-        private static bool IsNumeric(char val)
+        public static bool IsNumeric(char val)
         {
             bool isNumeric = false;
             if(val == '0' || val == '1' || val == '2' || val == '3' || val == '4' || val == '5' || val == '6' || val == '7' || val == '8' || val == '9')
@@ -91,7 +104,7 @@ namespace WindowsFormsApp4
             gridEnabled = false;
             chartDate = DateTime.Now.ToString("d");
             filepath = "";
-            chartTitle = "TESTTITEL";
+            chartTitle = "<insert title here>";
         }
 
         /// <summary>
@@ -285,6 +298,9 @@ namespace WindowsFormsApp4
                 Controls.Remove(b);
             }
             buttons.Clear();
+            Controls.Remove(ChartTitleLabel);
+            Controls.Remove(ChartTitleTextBox);
+            Controls.Remove(EnableGridCheckBox);
 
             cc.ChartArea c1 = new cc.ChartArea();
             c1.Name = "Default";
@@ -357,7 +373,7 @@ namespace WindowsFormsApp4
                 }
             }
 
-            CreateButtons();
+            CreateControls();
         }
 
         /// <summary>
@@ -433,6 +449,17 @@ namespace WindowsFormsApp4
         }
 
         /// <summary>
+        /// On ButtonClickEvent -> Open Form4
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button2_Click(object sender, EventArgs e)
+        {
+            Form4 child = new Form4();
+            child.Show();
+        }
+
+        /// <summary>
         /// Read n. line of file. Add to each YSeries.
         /// lineformat: xvalue yvalueOf1.Series ... yvalueOfn.Series
         /// </summary>
@@ -455,9 +482,11 @@ namespace WindowsFormsApp4
         }
 
         /// <summary>
-        /// Create Button for each YSeries in yval
+        /// Create Button for each YSeries in yval.
+        /// Create Label and TextBox for ChartTitle input.
+        /// Create CheckBox to enable/disable grid.
         /// </summary>
-        private void CreateButtons()
+        private void CreateControls()
         {
             int x = 80; int y = 110;
 
@@ -468,9 +497,9 @@ namespace WindowsFormsApp4
             xb.Width = 100;
             xb.BackColor = Color.Gainsboro;
             xb.ForeColor = Color.Black;
-            xb.Text = "X: " + xvalname;
-            xb.Name = "X: " + xvalname;
-            xb.Font = new Font("Arial", 12);
+            xb.Text = "X: " + '\n' + xvalname;
+            xb.Name = "X: " + '\n' + xvalname;
+            xb.Font = new Font("Arial", 9);
             xb.Click += new EventHandler(XButtonClick);
             Controls.Add(xb);
             buttons.Add(xb);
@@ -484,14 +513,38 @@ namespace WindowsFormsApp4
                 nb.Width = 100;
                 nb.BackColor = Color.Gainsboro;
                 nb.ForeColor = Color.Black;
-                nb.Text = "Y" + (i+1) + ": " + yval[i].name;
-                nb.Name = "Y" + (i+1) + ": " + yval[i].name;
+                nb.Text = "Y" + (i+1) + ": " + '\n' + yval[i].name;
+                nb.Name = "Y" + (i+1) + ": " + '\n' + yval[i].name;
                 nb.Tag = i;
-                nb.Font = new Font("Arial", 12);
+                nb.Font = new Font("Arial", 9);
                 nb.Click += new EventHandler(YButtonClick);
                 Controls.Add(nb);
                 buttons.Add(nb);
             }
+
+            ChartTitleLabel = new Label();
+            ChartTitleLabel.Location = new Point(80, 83);
+            ChartTitleLabel.Text = "Set ChartTitle: ";
+            ChartTitleLabel.Size = new Size(90, 20);
+            ChartTitleLabel.Font = new Font("Arial", 9);
+            Controls.Add(ChartTitleLabel);
+
+            ChartTitleTextBox = new TextBox();
+            ChartTitleTextBox.Location = new Point(170, 80);
+            ChartTitleTextBox.Size = new Size(500, 20);
+            ChartTitleTextBox.Text = chartTitle;
+            ChartTitleTextBox.Font = new Font("Arial", 9);
+            ChartTitleTextBox.TextChanged += new EventHandler(ChartTitleTextBoxTextChanged);
+            Controls.Add(ChartTitleTextBox);
+
+            EnableGridCheckBox = new CheckBox();
+            EnableGridCheckBox.Location = new Point(700, 83);
+            EnableGridCheckBox.Size = new Size(200, 20);
+            EnableGridCheckBox.Checked = gridEnabled;
+            EnableGridCheckBox.Text = "enable/disable grid";
+            EnableGridCheckBox.Font = new Font("Arial", 9);
+            EnableGridCheckBox.CheckedChanged += new EventHandler(EnableGridCheckBoxCheckedChanged);
+            Controls.Add(EnableGridCheckBox);
         }
 
         /// <summary>
@@ -508,7 +561,7 @@ namespace WindowsFormsApp4
         }
 
         /// <summary>
-        /// On ButtonCLickEvent -> Open Form3
+        /// On ButtonClickEvent -> Open Form3
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -516,6 +569,37 @@ namespace WindowsFormsApp4
         {
             Form3 child = new Form3(this);
             child.Show();
+        }
+
+        /// <summary>
+        /// On TextBoxTextChangedEvent print text to chart.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ChartTitleTextBoxTextChanged(object sender, EventArgs e)
+        {
+            TextBox tb = (TextBox)sender;
+            chartTitle = tb.Text;
+            chart1.Titles.ElementAt(0).Text = chartTitle;
+        }
+
+        /// <summary>
+        /// On CheckBoxCheckedChangedEvent set gridEnabled to CheckBox.Checked and draw chart.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void EnableGridCheckBoxCheckedChanged(object sender, EventArgs e)
+        {
+            CheckBox cb = (CheckBox)sender;
+            if(cb.Checked)
+            {
+                gridEnabled = true;
+            }
+            else
+            {
+                gridEnabled = false;
+            }
+            DrawChart();
         }
     }
 }

@@ -84,7 +84,7 @@ namespace WindowsFormsApp4
 
             if(textBox1.Text.Trim() != "")
             {
-                max = parent.ReadString(textBox1.Text);
+                max = Form1.ReadString(textBox1.Text);
             }
             else
             {
@@ -93,7 +93,7 @@ namespace WindowsFormsApp4
 
             if(textBox2.Text.Trim() != "")
             {
-                min = parent.ReadString(textBox2.Text);
+                min = Form1.ReadString(textBox2.Text);
             }
             else
             {
