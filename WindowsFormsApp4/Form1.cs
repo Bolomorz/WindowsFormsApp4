@@ -37,6 +37,7 @@ namespace WindowsFormsApp4
         /// List of buttons, one for each YSeries
         /// </summary>
         public List<Button> buttons = new List<Button>();
+        public Button SaveFileButton;
         public Label ChartTitleLabel;
         public TextBox ChartTitleTextBox;
         public CheckBox EnableGridCheckBox;
@@ -117,7 +118,7 @@ namespace WindowsFormsApp4
             string path = "";
 
             OpenFileDialog fd = new OpenFileDialog();
-            fd.Title = "Open File Dialog";
+            fd.Title = "Open File";
             fd.InitialDirectory = @"C:\Users\dominik.schneider\Documents\YAxisAppFiles\";
             fd.Filter = "All files (*.txt) | *.txt";
             fd.FilterIndex = 1;
@@ -298,6 +299,7 @@ namespace WindowsFormsApp4
                 Controls.Remove(b);
             }
             buttons.Clear();
+            Controls.Remove(SaveFileButton);
             Controls.Remove(ChartTitleLabel);
             Controls.Remove(ChartTitleTextBox);
             Controls.Remove(EnableGridCheckBox);
@@ -324,8 +326,8 @@ namespace WindowsFormsApp4
             chart1.ChartAreas.FindByName("Default").AxisX.MinorGrid.Enabled = gridEnabled;
             chart1.ChartAreas.FindByName("Default").AxisY.MajorGrid.Enabled = gridEnabled;
             chart1.ChartAreas.FindByName("Default").AxisY.MinorGrid.Enabled = gridEnabled;
-            chart1.ChartAreas.FindByName("Default").AxisX.Interval = (double)(x2 - x1) / 10.0;
-            chart1.ChartAreas.FindByName("Default").AxisY.Interval = (double)(x2 - x1) / 10.0;
+            chart1.ChartAreas.FindByName("Default").AxisX.Interval = (double)(x2 - x1) / 20.0;
+            chart1.ChartAreas.FindByName("Default").AxisY.Interval = (double)(x2 - x1) / 20.0;
             chart1.ChartAreas.FindByName("Default").AxisX.Minimum = x1;
             chart1.ChartAreas.FindByName("Default").AxisX.Maximum = x2;
             chart1.ChartAreas.FindByName("Default").AxisY.Minimum = x1;
@@ -335,7 +337,6 @@ namespace WindowsFormsApp4
 
             chart1.Titles.Add(new cc.Title(chartTitle));
             chart1.Titles.Add(new cc.Title(chartDate));
-
             chart1.Titles.ElementAt(1).Position = new cc.ElementPosition(94, 0, 5, 5);
             chart1.Titles.ElementAt(0).Font = new Font("Arial", 20, FontStyle.Bold);
 
@@ -403,8 +404,8 @@ namespace WindowsFormsApp4
                     count++;
                 }
 
-                defx1 = 0;
-                defx2 = 10;
+                defx1 = (int)Math.Floor(xval[0]);
+                defx2 = (int)Math.Ceiling(xval[xval.Count-1]);
                 x1 = defx1;
                 x2 = defx2;
             }
@@ -470,14 +471,15 @@ namespace WindowsFormsApp4
 
             string[] values = input.Split(separators, StringSplitOptions.RemoveEmptyEntries);
 
-            if(ReadString(values[0]) > lastx)
+            double xvalue = Form1.ReadString(values[0]);
+            if(xvalue > lastx)
             {
-                xval.Add(ReadString(values[0]));
+                xval.Add(xvalue);
                 for(int i = 1; i < values.Length; i++)
                 {
                     yval[i - 1].Add(ReadString(values[i]));
                 }
-                lastx = ReadString(values[0]);
+                lastx = xvalue;
             }
         }
 
@@ -545,6 +547,14 @@ namespace WindowsFormsApp4
             EnableGridCheckBox.Font = new Font("Arial", 9);
             EnableGridCheckBox.CheckedChanged += new EventHandler(EnableGridCheckBoxCheckedChanged);
             Controls.Add(EnableGridCheckBox);
+
+            SaveFileButton = new Button();
+            SaveFileButton.Location = new Point(5, 80);
+            SaveFileButton.Text = "Save File";
+            SaveFileButton.Size = new Size(70, 70);
+            SaveFileButton.Font = new Font("Arial", 9);
+            SaveFileButton.Click += new EventHandler(SaveFileButtonClick);
+            Controls.Add(SaveFileButton);
         }
 
         /// <summary>
@@ -600,6 +610,33 @@ namespace WindowsFormsApp4
                 gridEnabled = false;
             }
             DrawChart();
+        }
+
+        /// <summary>
+        /// On ButtonClickEvent -> Open SaveFileDialog to save file as .png
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SaveFileButtonClick(object sender, EventArgs e)
+        {
+            string path = "";
+
+            SaveFileDialog sfd = new SaveFileDialog();
+            sfd.Title = "Save File";
+            sfd.InitialDirectory = @"C:\Users\dominik.schneider\Documents\YAxisAppFiles\";
+            sfd.Filter = "All files (*.png) | *.png";
+            sfd.FilterIndex = 1;
+            sfd.RestoreDirectory = true;
+            sfd.DefaultExt = ".png";
+            sfd.FileName = chartTitle;
+
+            if(sfd.ShowDialog() == DialogResult.OK)
+            {
+                path = sfd.FileName;
+                chart1.SaveImage(path, cc.ChartImageFormat.Png);
+                chart1.Printing.Print(true);
+                MessageBox.Show("File was successfully saved in <" + path + ">", "File saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
     }
 }

@@ -49,7 +49,7 @@ namespace WindowsFormsApp4
             CompareMin(input);
             setmin = min;
             setmax = max;
-            interval = (double)(max - min) / 10.0;
+            interval = (double)(max - min) / 20.0;
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace WindowsFormsApp4
             if(input > setmin)
             {
                 setmax = input;
-                interval = (double)(setmax - setmin) / 10.0;       
+                interval = (double)(setmax - setmin) / 20.0;       
             }
         }
 
@@ -74,7 +74,7 @@ namespace WindowsFormsApp4
             if(input < setmax)
             { 
                 setmin = input;
-                interval = (double)(setmax - setmin) / 10.0;
+                interval = (double)(setmax - setmin) / 20.0;
             }
         }
 
@@ -84,7 +84,7 @@ namespace WindowsFormsApp4
         public void ResetSetMax()
         {
             setmax = max;
-            interval = (double)(setmax - setmin) / 10.0;
+            interval = (double)(setmax - setmin) / 20.0;
         }
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace WindowsFormsApp4
         public void ResetSetMin()
         {
             setmin = min;
-            interval = (double)(setmax - setmin) / 10.0;
+            interval = (double)(setmax - setmin) / 20.0;
         }
 
         /// <summary>
