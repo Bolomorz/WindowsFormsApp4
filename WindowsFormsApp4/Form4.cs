@@ -162,7 +162,7 @@ namespace WindowsFormsApp4
 
         /// <summary>
         /// On ButtonClickEvent create FileGenerator with input from controls in ComponentContainerList.
-        /// Generate file and close Form.
+        /// Generate file (.txt) and close Form.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -172,7 +172,7 @@ namespace WindowsFormsApp4
             {
                 FileGenerator fg = new FileGenerator();
 
-                string path = fg.GenerateFile();
+                string path = fg.GenerateFile(".txt");
 
                 string message = "The file was successfully saved in <" + path + ">.";
                 MessageBox.Show(message, "File saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -197,7 +197,53 @@ namespace WindowsFormsApp4
                     }
                 }
 
-                string path = fg.GenerateFile();
+                string path = fg.GenerateFile(".txt");
+
+                string message = "The file was successfully saved in <" + path + ">.";
+                MessageBox.Show(message, "File saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+            this.Close();
+        }
+
+        /// <summary>
+        /// On ButtonClickEvent create FileGenerator with input from controls in ComponentContainerList.
+        /// Generate file (.xlsx) and close Form.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (ReadString(textBox1.Text) == 0)
+            {
+                FileGenerator fg = new FileGenerator();
+
+                string path = fg.GenerateFile(".xlsx");
+
+                string message = "The file was successfully saved in <" + path + ">.";
+                MessageBox.Show(message, "File saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                FileGenerator fg = new FileGenerator(containers.Count - 1);
+
+                for (int i = 0; i < containers.Count; i++)
+                {
+                    if (i == 0)
+                    {
+                        fg.XAxis.name = containers[i].controls[5].Text.Replace(' ', '_');
+                        fg.XAxis.min = ReadString(containers[i].controls[4].Text);
+                        fg.XAxis.max = ReadString(containers[i].controls[3].Text);
+                    }
+                    else
+                    {
+                        fg.YAxes[i - 1].name = containers[i].controls[5].Text.Replace(' ', '_');
+                        fg.YAxes[i - 1].min = ReadString(containers[i].controls[4].Text);
+                        fg.YAxes[i - 1].max = ReadString(containers[i].controls[3].Text);
+                    }
+                }
+
+                string path = fg.GenerateFile(".xlsx");
 
                 string message = "The file was successfully saved in <" + path + ">.";
                 MessageBox.Show(message, "File saved", MessageBoxButtons.OK, MessageBoxIcon.Information);

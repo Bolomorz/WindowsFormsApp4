@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.IO;
 
 namespace WindowsFormsApp4
@@ -53,7 +54,7 @@ namespace WindowsFormsApp4
         /// Generate file with generated values.
         /// </summary>
         /// <returns>filepath</returns>
-        public string GenerateFile()
+        public string GenerateFile(string type)
         {
             double startx = (double)(rd.Next(0, 100)) / 1000.0;
             XAxis.last = startx;
@@ -101,8 +102,20 @@ namespace WindowsFormsApp4
                 }
             }
 
-            FindFileName();
-            SaveFile();
+            switch(type)
+            {
+                case ".txt":
+                    filepath = FindFileName();
+                    SaveFileTxt();
+                    break;
+                case ".xlsx":
+                    filepath = ExcelReaderWriter.FindNextFileName();
+                    SaveFileXlsx();
+                    break;
+                default:
+                    MessageBox.Show("FileFormat <" + type + "> not supported!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        break;
+            }
 
             return filepath;
         }
@@ -141,8 +154,10 @@ namespace WindowsFormsApp4
         /// <summary>
         /// Find next nonexistent file with predefined filenameformat "TestFile#.txt"
         /// </summary>
-        private void FindFileName()
+        private string FindFileName()
         {
+            string ret = string.Empty;
+
             int i = 0;
             bool cont = true;
             while(cont)
@@ -150,7 +165,7 @@ namespace WindowsFormsApp4
                 string path = @"C:\Users\dominik.schneider\Documents\YAxisAppFiles\" + "TestFile" + i + ".txt";
                 if (!File.Exists(path))
                 {
-                    filepath = path;
+                    ret = path;
                     cont = false;
                 }
                 else
@@ -158,6 +173,8 @@ namespace WindowsFormsApp4
                     i++;
                 }
             }
+
+            return ret;
         }
 
         /// <summary>
@@ -165,7 +182,7 @@ namespace WindowsFormsApp4
         /// Read lines from values in FileAxes.
         /// Append lines to file in filepath.
         /// </summary>
-        private void SaveFile()
+        private void SaveFileTxt()
         {
             string firstline = "";
             firstline += XAxis.name;
@@ -188,5 +205,42 @@ namespace WindowsFormsApp4
                 count++;
             }
         }
+
+        private void SaveFileXlsx()
+        {
+            ExcelReaderWriter writer = new ExcelReaderWriter(filepath);
+            
+            writer.WriteCell(1, 2, "XValues");
+            writer.WriteCell(2, 2, XAxis.name);
+            int i = 3;
+            foreach(FileAxis fx in YAxes)
+            {
+                writer.WriteCell(1, i, "YValues");
+                writer.WriteCell(2, i, fx.name);
+                i++;
+            }
+
+            int row = 3;
+            int count = 0;
+            foreach(double x in XAxis.values)
+            {
+                writer.WriteCell(row, 1, count.ToString());
+                writer.WriteCell(row, 2, x.ToString());
+
+                int column = 3;
+                foreach(FileAxis fx in YAxes)
+                {
+                    writer.WriteCell(row, column, fx.values[count].ToString());
+                    column++;
+                }
+
+                row++;
+                count++;
+            }
+
+            writer.SaveChanges();
+            writer.Quit();
+        }
+       
     }
 }
