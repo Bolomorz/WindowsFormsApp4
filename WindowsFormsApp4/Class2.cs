@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using System.Drawing;
 
 namespace WindowsFormsApp4
 {
@@ -70,29 +71,16 @@ namespace WindowsFormsApp4
             bool cont = true;
             while(cont)
             {
-                double nextx = (double)(rd.Next(0, 100)) / 1000.0;
+                double nextdouble = (double)rd.Next(int.MaxValue / 100, int.MaxValue) / (double)int.MaxValue;
+                double nextx = nextdouble / 10;
                 if((nextx + XAxis.last) < XAxis.max)
                 {
                     AddValue(XAxis, nextx);
                     foreach(FileAxis fa in YAxes)
                     {
-                        double nexty;
-                        if(fa.max < 10)
-                        {
-                            nexty = rd.NextDouble() / 100;
-                        }
-                        else if((fa.min < fa.max/10 && fa.min > 0) || (fa.min < 0 && fa.min > fa.max/10) || fa.min == 0)
-                        {
-                            nexty = (double)(rd.Next(fa.max/10, fa.max)) / (double)(fa.max * 10);
-                        }
-                        else if(fa.min > 0)
-                        {
-                            nexty = (double)(rd.Next(fa.max - fa.min, fa.max + fa.min)) / (double)((fa.max - fa.min) * 10);
-                        }
-                        else
-                        {
-                            nexty = (double)(rd.Next(fa.max + fa.min, fa.max - fa.min)) / (double)((fa.max - fa.min) * 10);
-                        }
+                        double interval = fa.max - fa.min;
+                        nextdouble = (double)rd.Next(int.MaxValue / 100, int.MaxValue) / (double)int.MaxValue;
+                        double nexty = nextdouble * interval / 100;
                         AddValue(fa, nexty);
                     }
                 }
@@ -147,6 +135,7 @@ namespace WindowsFormsApp4
                     axis.direction = true;
                 }
             }
+            next = Math.Round(next, 5);
             axis.values.Add(next);
             axis.last = next;
         }
@@ -206,31 +195,37 @@ namespace WindowsFormsApp4
             }
         }
 
+        /// <summary>
+        /// Save file in filepath to .xlsx format.
+        /// </summary>
         private void SaveFileXlsx()
         {
             ExcelReaderWriter writer = new ExcelReaderWriter(filepath);
-            
+
+            Color[] colors = { Color.Red, Color.Blue, Color.Green, Color.Orange, Color.Brown, Color.DarkCyan, Color.Turquoise, Color.Purple, Color.Yellow, Color.Black };
+
             writer.WriteCell(1, 2, "XValues");
             writer.WriteCell(2, 2, XAxis.name);
-            int i = 3;
-            foreach(FileAxis fx in YAxes)
+            int col = 3;
+            foreach (FileAxis fx in YAxes)
             {
-                writer.WriteCell(1, i, "YValues");
-                writer.WriteCell(2, i, fx.name);
-                i++;
+                writer.WriteCell(1, col, "YValues");
+                writer.WriteCell(2, col, fx.name);
+                writer.SetColor(2, col, colors[col - 3]);
+                col++;
             }
 
             int row = 3;
             int count = 0;
             foreach(double x in XAxis.values)
             {
-                writer.WriteCell(row, 1, count.ToString());
-                writer.WriteCell(row, 2, x.ToString());
+                writer.WriteCell(row, 1, count);
+                writer.WriteCell(row, 2, x);
 
                 int column = 3;
                 foreach(FileAxis fx in YAxes)
                 {
-                    writer.WriteCell(row, column, fx.values[count].ToString());
+                    writer.WriteCell(row, column, fx.values[count]);
                     column++;
                 }
 

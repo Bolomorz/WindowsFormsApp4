@@ -121,7 +121,7 @@ namespace WindowsFormsApp4
             OpenFileDialog fd = new OpenFileDialog();
             fd.Title = "Open File";
             fd.InitialDirectory = @"C:\Users\dominik.schneider\Documents\YAxisAppFiles\";
-            fd.Filter = "All files (*.txt) | *.txt";
+            fd.Filter = "TXT|*.txt|XLSX|*.xlsx";
             fd.FilterIndex = 1;
             fd.Multiselect = false;
             fd.RestoreDirectory = true;
@@ -385,7 +385,10 @@ namespace WindowsFormsApp4
         {
             lastx = double.MinValue;
 
-            if(System.IO.File.Exists(filepath))
+            bool exists = File.Exists(filepath);
+            string extension = Path.GetExtension(filepath);
+
+            if(exists && extension == ".txt")
             {
                 xval.Clear();
                 yval.Clear();
@@ -407,6 +410,18 @@ namespace WindowsFormsApp4
 
                 defx1 = (int)Math.Floor(xval[0]);
                 defx2 = (int)Math.Ceiling(xval[xval.Count-1]);
+                x1 = defx1;
+                x2 = defx2;
+            }
+            else if(exists && extension == ".xlsx")
+            {
+                xval.Clear();
+                yval.Clear();
+
+                ReadXlsx();
+
+                defx1 = (int)Math.Floor(xval[0]);
+                defx2 = (int)Math.Ceiling(xval[xval.Count - 1]);
                 x1 = defx1;
                 x2 = defx2;
             }
@@ -638,6 +653,77 @@ namespace WindowsFormsApp4
                 chart1.Printing.Print(true);
                 MessageBox.Show("File was successfully saved in <" + path + ">", "File saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+        }
+
+        private void ReadXlsx()
+        {
+            ExcelReaderWriter reader = new ExcelReaderWriter(filepath);
+
+            xvalname = reader.ReadCell(2, 2).Item1;
+
+            bool cont = true;
+
+            int col = 3;
+
+            while (cont)
+            {
+                Tuple<string, Color> tuple = reader.ReadCell(2, col);
+                if(tuple.Item1 != "")
+                {
+                    yval.Add(new YSeries(tuple.Item1, tuple.Item2));
+                }
+                else
+                {
+                    cont = false;
+                }
+            }
+
+            cont = true;
+
+            int row = 3;
+
+            while(cont)
+            {
+                if(reader.ReadCell(row, 1).Item1 != "")
+                {
+                    double xvalue = Form1.ReadString(reader.ReadCell(row, 2).Item1);
+                    if(xvalue > lastx)
+                    {
+                        xval.Add(xvalue);
+                        lastx = xvalue;
+
+                        int column = 3;
+                        int i = 0;
+                        bool cont2 = true;
+                        while(cont2)
+                        {
+                            Tuple<string, Color> tuple = reader.ReadCell(row, column);
+                            if(tuple.Item1 != "")
+                            {
+                                yval[i].values.Add(Form1.ReadString(tuple.Item1));
+                            }
+                            else
+                            {
+                                cont2 = false;
+                            }
+
+                            column++;
+                            i++;
+                        }
+
+                    }
+                    
+                }
+                else
+                {
+                    cont = false;
+                }
+
+                row++;
+            }
+
+            reader.SaveChanges();
+            reader.Quit();
         }
     }
 }

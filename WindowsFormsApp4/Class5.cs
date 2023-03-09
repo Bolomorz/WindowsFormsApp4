@@ -35,7 +35,7 @@ namespace WindowsFormsApp4
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("ExcelReaderWriter(); FileExists " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("ExcelReaderWriter(): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             else
@@ -51,11 +51,15 @@ namespace WindowsFormsApp4
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("ExcelReaderWriter(); !FileExists " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("ExcelReaderWriter(): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
+        /// <summary>
+        /// find next nonexistent filename like "TestExcel#.xlsx"
+        /// </summary>
+        /// <returns></returns>
         public static string FindNextFileName()
         {
             string ret = string.Empty;
@@ -79,6 +83,10 @@ namespace WindowsFormsApp4
             return ret;
         }
 
+        /// <summary>
+        /// quit app.
+        /// set opened to false.
+        /// </summary>
         public void Quit()
         {
             workbook.Close(0);
@@ -88,6 +96,11 @@ namespace WindowsFormsApp4
             opened = false;
         }
 
+        /// <summary>
+        /// return value and color of input cell.
+        /// </summary>
+        /// <param name="cell"></param>
+        /// <returns></returns>
         public Tuple<string, Color> ReadCell(string cell)
         {
             string value = string.Empty;
@@ -102,7 +115,7 @@ namespace WindowsFormsApp4
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("ReadCell()" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("ReadCell(): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             else
@@ -115,6 +128,12 @@ namespace WindowsFormsApp4
             return ret;
         }
 
+        /// <summary>
+        /// return value and color of input cell.
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="column"></param>
+        /// <returns></returns>
         public Tuple<string, Color> ReadCell(int row, int column)
         {
             string value = string.Empty;
@@ -129,7 +148,7 @@ namespace WindowsFormsApp4
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("ReadCell()" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("ReadCell(): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             else
@@ -142,6 +161,11 @@ namespace WindowsFormsApp4
             return ret;
         }
 
+        /// <summary>
+        /// write string to input cell.
+        /// </summary>
+        /// <param name="cell"></param>
+        /// <param name="value"></param>
         public void WriteCell(string cell, string value)
         {
 
@@ -149,11 +173,12 @@ namespace WindowsFormsApp4
             {
                 try
                 {
-                    worksheet.Cells[cell].Value2 = value;
+                    excel.Range range = worksheet.Cells[cell];
+                    range.Value2 = value;
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("WriteCell()" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("WriteCell(): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             else
@@ -162,6 +187,40 @@ namespace WindowsFormsApp4
             }
 
         }
+
+        /// <summary>
+        /// write double value to input cell.
+        /// </summary>
+        /// <param name="cell"></param>
+        /// <param name="value"></param>
+        public void WriteCell(string cell, double value)
+        {
+
+            if (opened)
+            {
+                try
+                {
+                    excel.Range range = worksheet.Cells[cell];
+                    range.Value2 = value;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("WriteCell(): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else
+            {
+                MessageBox.Show("App closed!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+        }
+
+        /// <summary>
+        /// write string to input cell.
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
         public void WriteCell(int row, int column, string value)
         {
 
@@ -174,7 +233,7 @@ namespace WindowsFormsApp4
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("WriteCell()" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("WriteCell(): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             else
@@ -184,6 +243,65 @@ namespace WindowsFormsApp4
 
         }
 
+        /// <summary>
+        /// write double value to input cell.
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        public void WriteCell(int row, int column, double value)
+        {
+
+            if (opened)
+            {
+                try
+                {
+                    excel.Range range = worksheet.Cells[row, column];
+                    range.Value2 = value;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("WriteCell(): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else
+            {
+                MessageBox.Show("App closed!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+        }
+
+        /// <summary>
+        /// write int value to input cell.
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="column"></param>
+        /// <param name="value"></param>
+        public void WriteCell(int row, int column, int value)
+        {
+            if (opened)
+            {
+                try
+                {
+                    excel.Range range = worksheet.Cells[row, column];
+                    range.Value2 = value;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("WriteCell(): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else
+            {
+                MessageBox.Show("App closed!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// set background color of input cell.
+        /// </summary>
+        /// <param name="cell"></param>
+        /// <param name="color"></param>
         public void SetColor(string cell, Color color)
         {
             if (opened)
@@ -194,7 +312,7 @@ namespace WindowsFormsApp4
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("SetColor()" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("SetColor(): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             else
@@ -203,6 +321,12 @@ namespace WindowsFormsApp4
             }
         }
 
+        /// <summary>
+        /// set background color of input cell.
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="column"></param>
+        /// <param name="color"></param>
         public void SetColor(int row, int column, Color color)
         {
             if (opened)
@@ -213,7 +337,7 @@ namespace WindowsFormsApp4
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("SetColor()" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("SetColor(): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             else
@@ -222,6 +346,9 @@ namespace WindowsFormsApp4
             }
         }
 
+        /// <summary>
+        /// save changes to filepath.
+        /// </summary>
         public void SaveChanges()
         {            
             try
@@ -237,7 +364,7 @@ namespace WindowsFormsApp4
             }
             catch (Exception ex)
             {
-                MessageBox.Show("SaveFile() " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("SaveFile(): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
